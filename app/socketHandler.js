@@ -25,14 +25,14 @@ module.exports = function(io, streams,app) {
   
       
     client.on('readyToStream', function(options) {
-      console.log('-- ' + client.id + ' is ready to stream --');
+      console.log('\n-- ' + client.id + ' is ready to stream --');
       console.log("readyToStream function content { " + JSON.stringify(options) + " } ")
       streams.addStream(client.id, options.name); 
 
     });
     
     client.on('update', function(options) {
-            console.log("update function content { " + JSON.stringify(options) + " } ");
+            console.log("Update function content { " + JSON.stringify(options) + " } ");
 
       streams.update(client.id, options.name);
     });
@@ -55,8 +55,8 @@ module.exports = function(io, streams,app) {
     });
 
     client.on('message', function (details) {
-      console.log("message function "+ details.to);
-      console.log("content { " + JSON.stringify(details) + " } ")
+      console.log("\nmessage function "+ details.to);
+      console.log("Message function content { " + JSON.stringify(details) + " } ")
       var otherClient = io.sockets.connected[clients[details.to]];
       if (!otherClient) {
         return;
@@ -73,7 +73,7 @@ module.exports = function(io, streams,app) {
         if(user){
           var otherClient = io.sockets.connected[clients[details.to]];
           details.from = reflected[text];
-          console.log(user + JSON.stringify(details));
+          console.log("\n" + JSON.stringify(details));
           details.name = user.name;
           otherClient.emit('receiveCall', details);
         }else{
@@ -87,7 +87,7 @@ module.exports = function(io, streams,app) {
     });
 
     client.on('ejectcall', function (details) {
-                console.log(JSON.stringify(details));
+                console.log("\nEjectcall by : " +JSON.stringify(details));
 
       var otherClient = io.sockets.connected[clients[details.callerId]];
 
@@ -95,6 +95,8 @@ module.exports = function(io, streams,app) {
     });
 
     client.on('removecall', function (details) {
+                      console.log("\nRemovecall by : " +JSON.stringify(details));
+
       var otherClient = io.sockets.connected[clients[details.callerId]];
       otherClient.emit("removecall");
     });
@@ -106,6 +108,8 @@ module.exports = function(io, streams,app) {
     // });
 
     client.on('acceptcall', function (details) {
+                      console.log("\nAcceptcall by : " +JSON.stringify(details));
+
 
       var otherClient = io.sockets.connected[clients[details.callerId]];
       otherClient.emit("acceptcall",details);
@@ -113,6 +117,8 @@ module.exports = function(io, streams,app) {
     });
 
     client.on('chat', function(options) {
+                      console.log("\nChat by : " +JSON.stringify(details));
+
       var otherClient = io.sockets.connected[clients[options.to]];
       otherClient.emit('chat', options);
     });
