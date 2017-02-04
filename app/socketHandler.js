@@ -24,12 +24,12 @@ module.exports = function(io, streams,app) {
 
   
       
-    client.on('readyToStream', function(options) {
+ /*   client.on('readyToStream', function(options) {
       console.log('\n-- ' + client.id + ' is ready to stream --');
       console.log("readyToStream function content { " + JSON.stringify(options) + " } ")
       streams.addStream(client.id, options.name); 
 
-    });
+    });*/
     
     client.on('update', function(options) {
             console.log("Update function content { " + JSON.stringify(options) + " } ");
