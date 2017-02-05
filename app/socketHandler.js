@@ -3,6 +3,7 @@ module.exports = function(io, streams,app) {
   var reflected = [];
   var User = require('./model/user');
   var Friend = require('./model/friend');
+  var Connections = require('./model/connections');
   io.on('connection', function(client) {
     console.log('\n-- ' + client.id + ' joined --');
     var text = "";
@@ -12,14 +13,14 @@ module.exports = function(io, streams,app) {
       for( var i=0; i < 5; i++ )
           text += possible.charAt(Math.floor(Math.random() * possible.length));
 
-    while(clients.hasOwnProperty(text)) {
-      var text = "";
-      var possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-      for( var i=0; i < 5; i++ )
-          text += possible.charAt(Math.floor(Math.random() * possible.length));
-      //clients[text] = client.id;
-    } 
-        //clients[text] = client.id;
+/*    while(clients.hasOwnProperty(text)) {
+     var text = "";
+     var possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+     for( var i=0; i < 5; i++ )
+     text += possible.charAt(Math.floor(Math.random() * possible.length));
+     //clients[text] = client.id;
+     }
+     //clients[text] = client.id;*/
       client.emit('connect');
 
   
@@ -31,11 +32,11 @@ module.exports = function(io, streams,app) {
 
     });*/
     
-    client.on('update', function(options) {
+  /*  client.on('update', function(options) {
             console.log("Update function content { " + JSON.stringify(options) + " } ");
 
       streams.update(client.id, options.name);
-    });
+    });*/
 
     client.on('poll', function(details){
         var currentDate = new Date();
@@ -48,7 +49,15 @@ module.exports = function(io, streams,app) {
 
 
       number=options.myId;
-      clients[options.myId] = client.id;
+        var newConnection = Connections({
+            phone_num: options.myId,
+            socket_id: client.id,
+            status: 0
+        });
+
+        newConnection.save();
+
+        clients[options.myId] = client.id;
       client.emit('id', options.myId);
 
       reflected[text] = options.myId;
@@ -126,7 +135,7 @@ module.exports = function(io, streams,app) {
 
     function leave() {
       console.log('\n-- ' + client.id + ' left --');
-      streams.removeStream(client.id);
+   //   streams.removeStream(client.id);
       delete clients[number];
     console.log(clients);
 
