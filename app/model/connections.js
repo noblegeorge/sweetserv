@@ -5,7 +5,7 @@ var mongoose = require('mongoose');
 var Schema = mongoose.Schema;
 
 var connection_schema = new Schema({
-    phone_number: { type: Number, required: true},
+    phone_number: { type: String, required: true},
     socket_id: { type: String, required: true },
     status: {type: Number},
     updated_at: Date
@@ -21,5 +21,5 @@ connection_schema.pre('save', function(next) {
 
 });
 
-var connections = mongoose.model('connections', connection_schema);
-module.exports = connections;
+var Connections = mongoose.model('Connections', connection_schema);
+module.exports = Connections;

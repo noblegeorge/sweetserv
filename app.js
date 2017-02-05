@@ -15,7 +15,7 @@ var app = express();
 
 //moongo db connection
 var mongoose = require('mongoose');
-mongoose.connect('mongodb://localhost:27017/test2');
+mongoose.connect('mongodb://helo:iSjf3MRyJx77hTFbSfbA5j0v4vjpNVDDhhrQiyxvk7awfDjqwSQLrG2JUvgzhlohIklmtMxXkpJp8gQV11ULsA==@helo.documents.azure.com:10250/test0/?ssl=true');
 
 // all environments
 app.set('port', process.env.PORT || 3000);

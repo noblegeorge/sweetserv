@@ -3,7 +3,7 @@ module.exports = function(io, streams,app) {
   var reflected = [];
   var User = require('./model/user');
   var Friend = require('./model/friend');
-  var Connections = require('./model/connections');
+  var Connection = require('./model/connections');
   io.on('connection', function(client) {
     console.log('\n-- ' + client.id + ' joined --');
     var text = "";
@@ -49,13 +49,17 @@ module.exports = function(io, streams,app) {
 
 
       number=options.myId;
-        var newConnection = Connections({
-            phone_num: options.myId,
-            socket_id: client.id,
-            status: 0
+        var newConnection = Connection({
+            phone_number: JSON.stringify(options.myId),
+            socket_id: JSON.stringify(client.id),
+//            status: 0
         });
 
-        newConnection.save();
+        newConnection.save(function(err) {
+          console.log(err);
+
+          
+        });
 
         clients[options.myId] = client.id;
       client.emit('id', options.myId);
