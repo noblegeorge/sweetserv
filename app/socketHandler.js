@@ -150,7 +150,10 @@ module.exports = function(io, streams,app) {
   });
 
   var getStatus = function(req, res) {
-                  console.log('\n');
+        var currentDate = new Date();
+
+                  console.log('\n'+currentDate+'\n');
+                                console.log(clients);
 
       var clientid = clients[req.params.id];
     //  console.log("lien minh get user statys"+clientid+ " "+req.params.id);
@@ -159,7 +162,7 @@ module.exports = function(io, streams,app) {
       }else{
         res.send({status: -1});
       }
-              console.log(clients);
+
 
     };
 
