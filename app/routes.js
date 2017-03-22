@@ -1,20 +1,44 @@
 module.exports = function(app, streams) {
   var User = require('./model/user');
   var Friend = require('./model/friend');
+  var twitterAPI = require('node-twitter-api');
+
+  var twitter = new twitterAPI({
+    consumerKey: 'YX7RFAfUTuXtFxR2cZCjF9OZK',
+    consumerSecret: '9M98QFCamAmp5WavPQ3re8Bva8YYR1JI6TrytbNzWscqF0VRb6'
+});
+
   console.log('cOME TO ROUTES ');
   // GET home 
   var index = function(req, res) {
-    res.render('index', { 
-                          title: 'Project RTC', 
-                          header: 'WebRTC live streaming',
-                          username: 'Username',
-                          share: 'Share this link',
-                          footer: 'pierre@chabardes.net',
-                          id: req.params.id
-                        });
+    res.render('index', {});
   };
 
   // POST check login info
+  var digitsOAuth = function(req,res) {
+    var uph_no = req.body.number,
+        utoken = req.body.token,
+        usecret = req.body.secret,
+        ufirst_name = req.body.first_name,
+        usecond_name = req.body.second_name,
+        uimei = req.body.imei,
+        udevice = req.body.device;
+    var additionalClaims = {
+        token: utoken,
+        secret: usecret
+      };
+      twitter.verifyCredentials(utoken,usecret,{}, function(error, data, response) {
+    if (error) {
+      console.log(error);
+      res.send("failed");
+    } else {
+      console.log("well");
+      res.send("sucess");
+    }
+  });
+
+  };
+
   var login = function(req, res) {
     console.log("come here");
     User.findOne({ username: req.body.username }, function(err, user) {
@@ -133,6 +157,8 @@ module.exports = function(app, streams) {
         newUser.save(function(err) {
           if (err){
             res.send({status: -1});
+                    console.log(err);
+
           }else{
             res.send({status: 1,id: text});
           }
@@ -151,10 +177,10 @@ module.exports = function(app, streams) {
 
   app.get('/streams.json', displayStreams);
   app.get('/users/:id', listUser);
-
   app.post('/friend_name', getPersonName);
   app.post('/friends', listFriend);
   app.post('/login', login);
+  app.post('/oAuth', digitsOAuth);
   app.post('/addFriend', addFriend);
   app.post('/register', register);
   app.get('/', index);

@@ -25,6 +25,8 @@
     "morgan": "^1.5.2",
     "multer": "^0.1.8",
     "serve-favicon": "^2.2.0",
-    "socket.io": "1.2.1"
+    "socket.io": "1.2.1",
+    "node-twitter-api": "^1.8.0"
+
   }
 }

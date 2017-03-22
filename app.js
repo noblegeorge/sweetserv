@@ -15,13 +15,12 @@ var app = express();
 
 //moongo db connection
 var mongoose = require('mongoose');
-mongoose.connect('mongodb://helo:iSjf3MRyJx77hTFbSfbA5j0v4vjpNVDDhhrQiyxvk7awfDjqwSQLrG2JUvgzhlohIklmtMxXkpJp8gQV11ULsA==@helo.documents.azure.com:10250/test0/?ssl=true');
+mongoose.connect('mongodb://localhost:27017/test0');
 
 // all environments
 app.set('port', process.env.PORT || 3000);
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'ejs');
-app.use(favicon(__dirname + '/public/images/favicon.ico'));
 app.use(logger('dev'));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
@@ -29,9 +28,7 @@ app.use(methodOverride());
 app.use(express.static(path.join(__dirname, 'public')));
 
 // development only
-if ('development' == app.get('env')) {
   app.use(errorHandler());
-}
 
 // routing
 require('./app/routes.js')(app, streams);
