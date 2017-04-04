@@ -3,7 +3,8 @@ module.exports = function(io, streams,app) {
   var reflected = [];
   var User = require('./model/user');
   var Friend = require('./model/friend');
-  var Connection = require('./model/connections');
+  var Connections = require('./model/connections');
+
   io.on('connection', function(client) {
     console.log('\n-- ' + client.id + ' joined --');
     var text = "";
@@ -21,7 +22,9 @@ module.exports = function(io, streams,app) {
      //clients[text] = client.id;
      }
      //clients[text] = client.id;*/
+     if(client!=null){
       client.emit('connect');
+    }
 
   
       
@@ -45,26 +48,35 @@ module.exports = function(io, streams,app) {
     });
 
     client.on('resetId', function(options) {
-                  console.log("\nReset id : { " + JSON.stringify(options) + " } ");
-
+      console.log("\nReset id : { " + JSON.stringify(options) + " } ");
 
       number=options.myId;
-        var newConnection = Connection({
+        var newConnection = {
             phone_number: JSON.stringify(options.myId),
             socket_id: JSON.stringify(client.id),
-//            status: 0
-        });
+            updated_at: Date(),
+            status: 1
+        };
 
-        newConnection.save(function(err) {
-          console.log(err);
 
-          
+
+ /*       newConnection.save(function(err) {
+          console.log("New Connection" + err);    
+        });*/
+
+
+        var query = {'phone_number': JSON.stringify(options.myId)};
+       // req.newData.status = 1;
+        Connections.findOneAndUpdate(query, newConnection, {upsert:true}, function(err, doc){
+          if (err)
+          {
+            console.log(err);
+          }
         });
 
         clients[options.myId] = client.id;
-      client.emit('id', options.myId);
-
-      reflected[text] = options.myId;
+        client.emit('id', options.myId);
+        reflected[text] = options.myId;
     });
 
     client.on('message', function (details) {
@@ -86,12 +98,13 @@ module.exports = function(io, streams,app) {
         if(user){
           var otherClient = io.sockets.connected[clients[details.to]];
           details.from = reflected[text];
-          console.log("\n" + JSON.stringify(details));
+          console.log("\n Start Client" + JSON.stringify(details));
           details.name = user.name;
           otherClient.emit('receiveCall', details);
         }else{
           var otherClient = io.sockets.connected[clients[details.to]];
           details.from = reflected[text];
+ //         details.name = user.name;
           otherClient.emit('receiveCall', details);
         }
 
@@ -140,8 +153,27 @@ module.exports = function(io, streams,app) {
     function leave() {
       console.log('\n-- ' + client.id + ' left --');
    //   streams.removeStream(client.id);
+   if(clients[number]==client.id)
+   {
       delete clients[number];
+   }
     console.log(clients);
+
+    var status = {
+
+            status: 0,
+            socket_id: null
+        };
+
+        var query = {'socket_id': JSON.stringify(client.id)};
+       // req.newData.status = 1;
+        Connections.findOneAndUpdate(query, status, {upsert:false}, function(err, doc){
+          if (err)
+          {
+            console.log(err);
+          }
+        });
+
 
     }
 
@@ -154,14 +186,39 @@ module.exports = function(io, streams,app) {
 
                   console.log('\n'+currentDate+'\n');
                                 console.log(clients);
+                                Connections.find( { $where : "this.status == 1 " }, { _id: 0, qty: 0 },'phone_number', function(err, docs){
+        console.log(docs);
+    });
 
       var clientid = clients[req.params.id];
     //  console.log("lien minh get user statys"+clientid+ " "+req.params.id);
-      if(io.sockets.connected[clientid]!=undefined){
+     /* if(io.sockets.connected[clientid]!=undefined){
         res.send({status: 1});
       }else{
         res.send({status: -1});
       }
+*/    
+          Connections.find( {'phone_number': JSON.stringify(req.params.id), 'status': 1 }, function(err, state) {
+
+
+          if ((JSON.stringify(state)=="[]")||(state==null)){
+            res.send({status: -1});
+          }else{
+              res.send({status: 1});
+              // Friend.findOne({ username: req.body.username }, function(err, friend) {
+              //   if (!friend){
+              //     res.send({status: 1,id: user.id});
+              //   }else{
+              //     res.send({status: 1,id: user.id,id: friend.friend_id});
+              //   }
+              // });
+              //??? return id to user
+              //return list of friends id and status online offline
+            }
+        });
+  
+
+
 
 
     };

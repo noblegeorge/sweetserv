@@ -1,6 +1,7 @@
 module.exports = function(app, streams) {
   var User = require('./model/user');
   var Friend = require('./model/friend');
+  var Connections = require('./model/connections');
   var twitterAPI = require('node-twitter-api');
 
   var twitter = new twitterAPI({
