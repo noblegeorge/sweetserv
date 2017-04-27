@@ -4,6 +4,8 @@ module.exports = function(io, streams,app) {
   var User = require('./model/user');
   var Friend = require('./model/friend');
   var Connections = require('./model/connections');
+  var Profile = require('./model/profile');
+  var Calls = require('./model/calls');
 
   io.on('connection', function(client) {
     console.log('\n-- ' + client.id + ' joined --');
@@ -11,8 +13,8 @@ module.exports = function(io, streams,app) {
     var number= "";
     var possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
 
-      for( var i=0; i < 5; i++ )
-          text += possible.charAt(Math.floor(Math.random() * possible.length));
+    for( var i=0; i < 5; i++ )
+      text += possible.charAt(Math.floor(Math.random() * possible.length));
 
 /*    while(clients.hasOwnProperty(text)) {
      var text = "";
@@ -26,8 +28,17 @@ module.exports = function(io, streams,app) {
       client.emit('connect');
     }
 
-  
-      
+
+    client.on("packet", function(type, data) {
+      console.log("received ping");
+    });
+
+    client.on("packetCreate", function(type, data) {
+      console.log("sending pong");
+    });
+
+
+
  /*   client.on('readyToStream', function(options) {
       console.log('\n-- ' + client.id + ' is ready to stream --');
       console.log("readyToStream function content { " + JSON.stringify(options) + " } ")
@@ -42,7 +53,7 @@ module.exports = function(io, streams,app) {
     });*/
 
     client.on('poll', function(details){
-        var currentDate = new Date();
+      var currentDate = new Date();
 
       console.log("\nPoll from " + details.myId + " at " + currentDate);
     });
@@ -51,33 +62,27 @@ module.exports = function(io, streams,app) {
       console.log("\nReset id : { " + JSON.stringify(options) + " } ");
 
       number=options.myId;
-        var newConnection = {
-            phone_number: JSON.stringify(options.myId),
-            socket_id: JSON.stringify(client.id),
-            updated_at: Date(),
-            status: 1
-        };
+      var newConnection = {
+        phone_number: options.myId,
+        socket_id: client.id,
+        updated_at: Date(),
+        status: 1
+      };
+      var query = {'phone_number': options.myId};
+      Connections.findOneAndUpdate(query, newConnection, {upsert:true}, function(err, doc){
+        if (err)
+        {
+          console.log(err);
+        }
+      });
 
+      clients[options.myId] = client.id;
+      client.emit('id', options.myId);
+      reflected[text] = options.myId;
 
-
- /*       newConnection.save(function(err) {
-          console.log("New Connection" + err);    
-        });*/
-
-
-        var query = {'phone_number': JSON.stringify(options.myId)};
-       // req.newData.status = 1;
-        Connections.findOneAndUpdate(query, newConnection, {upsert:true}, function(err, doc){
-          if (err)
-          {
-            console.log(err);
-          }
-        });
-
-        clients[options.myId] = client.id;
-        client.emit('id', options.myId);
-        reflected[text] = options.myId;
     });
+
+
 
     client.on('message', function (details) {
       console.log("\nmessage function "+ details.to);
@@ -94,6 +99,32 @@ module.exports = function(io, streams,app) {
     });
 
     client.on('startclient', function (details) {
+
+
+      Connections.findOne({ socket_id: client.id }, function(err, connection) {
+        if (!connection){
+          console.log("Error" + connection + err +client.id);
+
+        }else{
+          var socket_caller = connection.getPhoneNumber();
+          console.log("Call from " + socket_caller + client.id);
+
+          var newCall = Calls({
+            caller: socket_caller,
+            callee: details.to,
+            status: 1,
+            init_time: Date()
+          });
+          newCall.save(function(err) {
+            if (err){
+            //res.send({status: -1});
+            console.log(err);
+            }
+          });
+        }
+      });
+
+
       User.findOne({id: reflected[text]}, function(err, user) {
         if(user){
           var otherClient = io.sockets.connected[clients[details.to]];
@@ -104,16 +135,15 @@ module.exports = function(io, streams,app) {
         }else{
           var otherClient = io.sockets.connected[clients[details.to]];
           details.from = reflected[text];
- //         details.name = user.name;
           otherClient.emit('receiveCall', details);
         }
 
       });
-        
+
     });
 
     client.on('ejectcall', function (details) {
-                console.log("\nEjectcall by : " +JSON.stringify(details));
+      console.log("\nEjectcall by : " +JSON.stringify(details));
 
       var otherClient = io.sockets.connected[clients[details.callerId]];
 
@@ -121,7 +151,7 @@ module.exports = function(io, streams,app) {
     });
 
     client.on('removecall', function (details) {
-                      console.log("\nRemovecall by : " +JSON.stringify(details));
+      console.log("\nRemovecall by : " +JSON.stringify(details));
 
       var otherClient = io.sockets.connected[clients[details.callerId]];
       otherClient.emit("removecall");
@@ -130,20 +160,20 @@ module.exports = function(io, streams,app) {
     // client.on('removevideo', function (details) {
     //   var otherClient = io.sockets.connected[clients[details.other]];
     //   otherClient.emit("removevideo");
-       
+
     // });
 
     client.on('acceptcall', function (details) {
-                      console.log("\nAcceptcall by : " +JSON.stringify(details));
+      console.log("\nAcceptcall by : " +JSON.stringify(details));
 
 
       var otherClient = io.sockets.connected[clients[details.callerId]];
       otherClient.emit("acceptcall",details);
-       
+
     });
 
     client.on('chat', function(options) {
-                      console.log("\nChat by : " +JSON.stringify(details));
+      console.log("\nChat by : " +JSON.stringify(details));
 
       var otherClient = io.sockets.connected[clients[options.to]];
       otherClient.emit('chat', options);
@@ -155,56 +185,56 @@ module.exports = function(io, streams,app) {
    //   streams.removeStream(client.id);
    if(clients[number]==client.id)
    {
-      delete clients[number];
-   }
-    console.log(clients);
+    delete clients[number];
+  }
+  console.log(clients);
 
-    var status = {
+  var status = {
 
-            status: 0,
-            socket_id: null
-        };
+    status: 0,
+    socket_id: null
+  };
 
-        var query = {'socket_id': JSON.stringify(client.id)};
+  var query = {'socket_id': client.id};
        // req.newData.status = 1;
-        Connections.findOneAndUpdate(query, status, {upsert:false}, function(err, doc){
-          if (err)
-          {
-            console.log(err);
-          }
-        });
+       Connections.findOneAndUpdate(query, status, {upsert:false}, function(err, doc){
+        if (err)
+        {
+          console.log(err);
+        }
+      });
 
 
-    }
+     }
 
-    client.on('disconnect', leave);
-    client.on('leave', leave);
+     client.on('disconnect', leave);
+     client.on('leave', leave);
+   });
+
+var getStatus = function(req, res) {
+  var currentDate = new Date();
+
+  console.log('\n'+currentDate+'\n');
+  console.log(clients);
+  Connections.find( { $where : "this.status == 1 " }, { _id: 0, qty: 0 },'phone_number', function(err, docs){
+    console.log(docs);
   });
 
-  var getStatus = function(req, res) {
-        var currentDate = new Date();
-
-                  console.log('\n'+currentDate+'\n');
-                                console.log(clients);
-                                Connections.find( { $where : "this.status == 1 " }, { _id: 0, qty: 0 },'phone_number', function(err, docs){
-        console.log(docs);
-    });
-
-      var clientid = clients[req.params.id];
+  var clientid = clients[req.params.id];
     //  console.log("lien minh get user statys"+clientid+ " "+req.params.id);
      /* if(io.sockets.connected[clientid]!=undefined){
         res.send({status: 1});
       }else{
         res.send({status: -1});
       }
-*/    
-          Connections.find( {'phone_number': JSON.stringify(req.params.id), 'status': 1 }, function(err, state) {
+      */    
+      Connections.find( {'phone_number': req.params.id, 'status': 1 }, function(err, state) {
 
 
-          if ((JSON.stringify(state)=="[]")||(state==null)){
-            res.send({status: -1});
-          }else{
-              res.send({status: 1});
+        if ((JSON.stringify(state)=="[]")||(state==null)){
+          res.send({status: -1});
+        }else{
+          res.send({status: 1});
               // Friend.findOne({ username: req.body.username }, function(err, friend) {
               //   if (!friend){
               //     res.send({status: 1,id: user.id});
@@ -215,15 +245,15 @@ module.exports = function(io, streams,app) {
               //??? return id to user
               //return list of friends id and status online offline
             }
-        });
-  
+          });
+
 
 
 
 
     };
 
-  app.get('/status/:id', getStatus);
+    app.get('/status/:id', getStatus);
 
-};
+  };
 

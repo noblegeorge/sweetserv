@@ -47,6 +47,8 @@ profileSchema.methods.compareToken = function(candidateToken) {
 };
 
 
+
+
 // the schema is useless so far
 // we need to create a model using it
 var Profile = mongoose.model('Profile', profileSchema);

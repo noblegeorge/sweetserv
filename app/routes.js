@@ -2,12 +2,13 @@ module.exports = function(app, streams) {
   var User = require('./model/user');
   var Friend = require('./model/friend');
   var Connections = require('./model/connections');
+  var Profile = require('./model/profile.js');
   var twitterAPI = require('node-twitter-api');
 
   var twitter = new twitterAPI({
     consumerKey: 'YX7RFAfUTuXtFxR2cZCjF9OZK',
     consumerSecret: '9M98QFCamAmp5WavPQ3re8Bva8YYR1JI6TrytbNzWscqF0VRb6'
-});
+  });
 
   console.log('cOME TO ROUTES ');
   // GET home 
@@ -17,35 +18,67 @@ module.exports = function(app, streams) {
 
   // POST check login info
   var digitsOAuth = function(req,res) {
-    var uph_no = req.body.number,
-        utoken = req.body.token,
-        usecret = req.body.secret,
-        ufirst_name = req.body.first_name,
-        usecond_name = req.body.second_name,
-        uimei = req.body.imei,
-        udevice = req.body.device;
-    var additionalClaims = {
-        token: utoken,
-        secret: usecret
-      };
-      twitter.verifyCredentials(utoken,usecret,{}, function(error, data, response) {
-    if (error) {
-      console.log(error);
-      res.send("failed");
-    } else {
-      console.log("well");
-      res.send("sucess");
-    }
-  });
 
+
+    var uph_no = req.body.number,
+    utoken = req.body.token,
+    usecret = req.body.secret,
+    ufirst_name = req.body.first_name,
+    usecond_name = req.body.second_name,
+    uimei = req.body.imei,
+    udevice = req.body.device;
+    var additionalClaims = {
+      token: utoken,
+      secret: usecret
+    };
+    twitter.verifyCredentials(utoken,usecret,{}, function(error, data, response) {
+      if (error) {
+        console.log(error);
+        res.send({status: -1});
+      } else {
+        console.log("User auth from: " + uph_no);
+        var newProfile = {
+          phone_number: uph_no,
+          first_name: ufirst_name,
+          second_name: usecond_name,
+          token: utoken,
+          imei: uimei,
+          device: udevice,
+          updated_at: Date(),
+        };
+
+
+        var query = {'phone_number': uph_no};
+       // req.newData.status = 1;
+       Profile.findOneAndUpdate(query, newProfile, {upsert:true}, function(err, doc){
+        if (err)
+        {
+          console.log(err);
+          res.send({status: -2});
+
+        }
+        else
+        {
+          res.send({status: 1});
+        }
+      });
+
+
+
+
+
+
+
+     }
+   });
   };
 
   var login = function(req, res) {
     console.log("come here");
     User.findOne({ username: req.body.username }, function(err, user) {
-          if (!user){
-            res.send({status: -1});
-          }else{
+      if (!user){
+        res.send({status: -1});
+      }else{
             // test a matching password
             if(user.comparePassword(req.body.password)==1)
             {
@@ -109,35 +142,32 @@ module.exports = function(app, streams) {
     });
   };
 
-  
-
-
   //POST add friend
   var addFriend = function(req, res) {
     var username = req.body.username;
     var friend_id = req.body.friend_id;
-      var newFriend = Friend({
-          username: username,
-          friend_id: friend_id
-      });
-      newFriend.save(function(err) {
-        if (err){
-          res.send(err);
-        }else{
-          var newFriend_reverse = Friend({
+    var newFriend = Friend({
+      username: username,
+      friend_id: friend_id
+    });
+    newFriend.save(function(err) {
+      if (err){
+        res.send(err);
+      }else{
+        var newFriend_reverse = Friend({
           username: friend_id,
           friend_id: username
-          });
-          newFriend_reverse.save(function(err) {
-            if (err){
-              res.send(err);
-            }else{
-              res.send({status: 1});
-            }
-          });
-        }
-      });
-      
+        });
+        newFriend_reverse.save(function(err) {
+          if (err){
+            res.send(err);
+          }else{
+            res.send({status: 1});
+          }
+        });
+      }
+    });
+
   };
 
   // POST register user account
@@ -145,26 +175,26 @@ module.exports = function(app, streams) {
     var text = "";
     var possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
     for( var i=0; i < 5; i++ )
-        text += possible.charAt(Math.floor(Math.random() * possible.length));
+      text += possible.charAt(Math.floor(Math.random() * possible.length));
     //remember to check trung id trong db
     var newUser = User({
-          name: req.body.name,
-          username: req.body.username,
-          password: req.body.password,
-          email: req.body.email,
-          phone: req.body.phone,
-          id: req.body.name
-        });
-        newUser.save(function(err) {
-          if (err){
-            res.send({status: -1});
-                    console.log(err);
+      name: req.body.name,
+      username: req.body.username,
+      password: req.body.password,
+      email: req.body.email,
+      phone: req.body.phone,
+      id: req.body.name
+    });
+    newUser.save(function(err) {
+      if (err){
+        res.send({status: -1});
+        console.log(err);
 
-          }else{
-            res.send({status: 1,id: text});
-          }
-          
-        });
+      }else{
+        res.send({status: 1,id: text});
+      }
+
+    });
   };
 
 

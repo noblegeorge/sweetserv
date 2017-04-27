@@ -71,7 +71,7 @@ var server = app.listen(app.get('port'), function(){
 */
 var io = require('socket.io').listen(httpsServer);
 
-io.listen(httpServer,{'pingInterval': 20000, 'pingTimeout': 70000});
+io.listen(httpServer,{'pingInterval': 30000, 'pingTimeout': 80000});
 
 
 
